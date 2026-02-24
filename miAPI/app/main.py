@@ -2,6 +2,7 @@
 from fastapi import FastAPI, status, HTTPException
 from typing import Optional
 import asyncio
+from pydantic import BaseModel, Field
 
 # Instancia del servidor
 app = FastAPI(
@@ -16,6 +17,12 @@ usuarios = [
     {"id":2,"nombre":"Sergio","edad":22},
     {"id":3,"nombre":"Jesús Manuel","edad":20},
 ]
+
+# Creación de modelo
+class crear_usuario(BaseModel):
+    id: int = Field(...,gt=0, description="Identificador único del usuario")
+    nombre: str = Field(..., min_length=3, max_length=50, example="Agripino")
+    edad: int = Field(..., ge=1, le=123, description="Edad válida entre 1 y 123")
 
 # Endpoints
 @app.get("/")
@@ -58,12 +65,11 @@ async def leer_usuarios():
     }
 
 # MÉTODO POST
-@app.post("/v1/crearUsuario/", tags=["HTTP CRUD"])
-async def agregar_usuario(usuario:dict):
+@app.post("/v1/usuarios/", tags=["HTTP CRUD"])
+async def agregar_usuario(usuario:crear_usuario):
     for usr in usuarios:
-        if usr["id"] == usuario.get("id"):
+        if usr["id"] == usuario.id:
             raise HTTPException(status_code=400, detail="El ID ya existe")
-
     usuarios.append(usuario)
     return{
         "mensaje":"Usuario agregado exitosamente",
@@ -72,7 +78,7 @@ async def agregar_usuario(usuario:dict):
     }
 
 # MÉTODO PUT
-@app.put("/v1/actualizarUsuario/{user_id}", tags=["HTTP CRUD"])
+@app.put("/v1/usuarios/{user_id}", tags=["HTTP CRUD"])
 async def actualizar_usuario(user_id:int, usuario_actualizado:dict):
     for index, usr in enumerate(usuarios):
         if usr["id"] == user_id:
@@ -87,7 +93,7 @@ async def actualizar_usuario(user_id:int, usuario_actualizado:dict):
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 # MÉTODO PATCH
-@app.patch("/v1/modificarUsuario/{user_id}", tags=["HTTP CRUD"])
+@app.patch("/v1/usuarios/{user_id}", tags=["HTTP CRUD"])
 async def modificar_usuario(user_id:int, datos_parciales:dict):
     for usr in usuarios:
         if usr["id"] == user_id:
@@ -101,7 +107,7 @@ async def modificar_usuario(user_id:int, datos_parciales:dict):
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 # MÉTODO DELETE
-@app.delete("/v1/eliminarUsuario/{user_id}", tags=["HTTP CRUD"])
+@app.delete("/v1/usuarios/{user_id}", tags=["HTTP CRUD"])
 async def eliminar_usuario(user_id:int):
     for index, usr in enumerate(usuarios):
         if usr["id"] == user_id:
