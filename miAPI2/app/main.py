@@ -4,9 +4,6 @@ from typing import Optional
 import asyncio
 from pydantic import BaseModel, Field
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-import secrets
-
-from starlette.status import HTTP_200_OK
 
 # Instancia del servidor
 app = FastAPI(
@@ -27,20 +24,6 @@ class crear_usuario(BaseModel):
     id: int = Field(...,gt=0, description="Identificador único del usuario")
     nombre: str = Field(..., min_length=3, max_length=50, example="Agripino")
     edad: int = Field(..., ge=1, le=123, description="Edad válida entre 1 y 123")
-
-# Seguridad HTTP Basic
-security = HTTPBasic()
-
-def verificar_peticion(credenciales: HTTPBasicCredentials = Depends(security)):
-    usuario_correcto = secrets.compare_digest(credenciales.username,"giancarlo")
-    contrasena_correcta = secrets.compare_digest(credenciales.password,"12345")
-
-    if not(usuario_correcto and contrasena_correcta):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="CREDENCIALES NO VÁLIDAS."
-        )
-    return credenciales.username
 
 # Endpoints
 @app.get("/")
@@ -111,26 +94,28 @@ async def actualizar_usuario(user_id:int, usuario_actualizado:dict):
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 # MÉTODO PATCH
-@app.patch("/v1/usuarios/{user_id}", tags=["HTTP CRUD"], status_code=HTTP_200_OK)
+@app.patch("/v1/usuarios/{user_id}", tags=["HTTP CRUD"])
 async def modificar_usuario(user_id:int, datos_parciales:dict):
     for usr in usuarios:
         if usr["id"] == user_id:
             usr.update(datos_parciales)
             return {
                 "mensaje":"Usuario modificado exitosamente",
-                "datos_actualizados":usr
+                "datos_actualizados":usr,
+                "status":200
             }
 
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
 # MÉTODO DELETE
-@app.delete("/v1/usuarios/{user_id}", tags=["HTTP CRUD"], status_code=HTTP_200_OK)
-async def eliminar_usuario(user_id:int, usuarioAuth: str = Depends(verificar_peticion)):
+@app.delete("/v1/usuarios/{user_id}", tags=["HTTP CRUD"])
+async def eliminar_usuario(user_id:int):
     for index, usr in enumerate(usuarios):
         if usr["id"] == user_id:
             usuarios.pop(index)
             return {
-                "mensaje": f"Usuario eliminado por: {usuarioAuth}"
+                "mensaje":"Usuario eliminado exitosamente",
+                "status":200
             }
 
     raise HTTPException(status_code=404, detail="Usuario no encontrado")
