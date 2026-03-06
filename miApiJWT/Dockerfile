@@ -8,13 +8,14 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Instalar las dependencias de FastAPI
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar el código del servidor
 COPY ./app ./app
 
 # Exponer el puerto de trabajo
-EXPOSE 5000
+EXPOSE 5002
 
 # Indica comando que debe ejecutarse para levantar el servidor
-CMD ["uvicorn","app.main:app","--host","0.0.0.0","--port","5000","--reload"]
+CMD ["uvicorn","app.main:app","--host","0.0.0.0","--port","5002","--reload"]

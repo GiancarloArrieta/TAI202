@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: Server_FastAPI_JWT
+    ports:
+      - "5002:5002"
+    volumes:
+      - .:/app
+    environment:
+      - SECRET_KEY=llave_secreta_123
