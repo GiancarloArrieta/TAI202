@@ -3,6 +3,10 @@ from app.models.usuario import crear_usuario
 from app.data.database import usuarios
 from app.security.auth import verificar_peticion
 
+from sqlalchemy.orm import Session
+from app.data.db import get_db
+from app.data.usuarios import usuario as dbUsuario
+
 # DECLARACIÓN DE ROUTER
 router = APIRouter(
     prefix = "/v1/usuarios",
@@ -11,22 +15,24 @@ router = APIRouter(
 
 # MÉTODO GET
 @router.get("/", status_code = status.HTTP_200_OK)
-async def leer_usuarios():
+async def leer_usuarios(db:Session = Depends(get_db)):
+    queryUsuarios = db.query(dbUsuario).all()
     return{
-        "total":len(usuarios),
-        "usuarios":usuarios
+        "total":len(queryUsuarios),
+        "usuarios":queryUsuarios
     }
 
 # MÉTODO POST
 @router.post("/", status_code = status.HTTP_201_CREATED)
-async def agregar_usuario(usuario:crear_usuario):
-    for usr in usuarios:
-        if usr["id"] == usuario.id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El ID ya existe")
-    usuarios.append(usuario)
+async def agregar_usuario(usuarioPy:crear_usuario, db:Session = Depends(get_db)):
+    nuevoUsuario = dbUsuario(
+        nombre = usuarioPy.nombre,
+        edad = usuarioPy.edad
+    )
+    db.add(nuevoUsuario); db.commit(); db.refresh(nuevoUsuario)
     return{
         "mensaje":"Usuario agregado exitosamente",
-        "datos_nuevos":usuario
+        "usuario":nuevoUsuario
     }
 
 # MÉTODO PUT
